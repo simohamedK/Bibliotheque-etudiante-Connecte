@@ -1,0 +1,103 @@
+@prefix bv:   <https://simohamedK.github.io/bv#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+bv: a owl:Ontology ;
+  dcterms:title "Bibliothèque Vocale – Vocabulaire"@fr ;
+  dcterms:creator "Kamli Mohamed"@fr ;
+  dcterms:description "Vocabulaire pour décrire des livres, auteurs, thèmes et requêtes vocales/narration dans le projet Bibliothèque Vocale."@fr ;
+  dcterms:license <https://opensource.org/licenses/MIT> ;
+  dcterms:created "2025-10-20"^^xsd:date ;
+  rdfs:isDefinedBy <https://simohamedK.github.io/bv#> .
+
+### CLASSES
+
+bv:Book a rdfs:Class ;
+  rdfs:label "Livre"@fr ;
+  rdfs:comment "Un livre catalogué dans la Bibliothèque Vocale."@fr ;
+  rdfs:isDefinedBy bv: .
+
+bv:Author a rdfs:Class ;
+  rdfs:label "Auteur"@fr ;
+  rdfs:comment "Une personne physique auteure d’un livre."@fr ;
+  rdfs:isDefinedBy bv: .
+
+bv:Theme a rdfs:Class ;
+  rdfs:label "Thème"@fr ;
+  rdfs:comment "Un thème ou sujet associé à un livre."@fr ;
+  rdfs:isDefinedBy bv: .
+
+bv:SearchQuery a rdfs:Class ;
+  rdfs:label "Requête de recherche"@fr ;
+  rdfs:comment "Une requête de recherche, potentiellement issue de la voix, avec confiance et source."@fr ;
+  rdfs:isDefinedBy bv: .
+
+### PROPRIÉTÉS OBJET
+
+bv:hasAuthor a rdf:Property ;
+  rdfs:label "a pour auteur"@fr ;
+  rdfs:comment "Relie un livre à son auteur."@fr ;
+  rdfs:domain bv:Book ;
+  rdfs:range  bv:Author ;
+  rdfs:isDefinedBy bv: .
+
+bv:hasTheme a rdf:Property ;
+  rdfs:label "a pour thème"@fr ;
+  rdfs:comment "Relie un livre à un thème."@fr ;
+  rdfs:domain bv:Book ;
+  rdfs:range  bv:Theme ;
+  rdfs:isDefinedBy bv: .
+
+### PROPRIÉTÉS DE DONNÉES
+
+bv:isbn a rdf:Property ;
+  rdfs:label "ISBN"@fr ;
+  rdfs:comment "Identifiant ISBN du livre."@fr ;
+  rdfs:domain bv:Book ;
+  rdfs:range  xsd:string ;
+  rdfs:isDefinedBy bv: .
+
+bv:publishedYear a rdf:Property ;
+  rdfs:label "Année de publication"@fr ;
+  rdfs:comment "Année de publication (gYear)."@fr ;
+  rdfs:domain bv:Book ;
+  rdfs:range  xsd:gYear ;
+  rdfs:isDefinedBy bv: .
+
+bv:summary a rdf:Property ;
+  rdfs:label "Résumé"@fr ;
+  rdfs:comment "Résumé textuel du livre."@fr ;
+  rdfs:domain bv:Book ;
+  rdfs:range  rdf:langString ;
+  rdfs:isDefinedBy bv: .
+
+bv:wikidataURI a rdf:Property ;
+  rdfs:label "URI Wikidata"@fr ;
+  rdfs:comment "URI Wikidata d’un auteur (ex.: https://www.wikidata.org/entity/Qxxxx)."@fr ;
+  rdfs:domain bv:Author ;
+  rdfs:range  xsd:anyURI ;
+  rdfs:isDefinedBy bv: .
+
+bv:queryText a rdf:Property ;
+  rdfs:label "Texte de la requête"@fr ;
+  rdfs:comment "Texte transcrit de la recherche (voix ou saisie)."@fr ;
+  rdfs:domain bv:SearchQuery ;
+  rdfs:range  xsd:string ;
+  rdfs:isDefinedBy bv: .
+
+bv:source a rdf:Property ;
+  rdfs:label "Source"@fr ;
+  rdfs:comment "Origine de la requête: 'voix' ou 'texte'."@fr ;
+  rdfs:domain bv:SearchQuery ;
+  rdfs:range  xsd:string ;
+  rdfs:isDefinedBy bv: .
+
+bv:confidence a rdf:Property ;
+  rdfs:label "Confiance"@fr ;
+  rdfs:comment "Score de confiance (0..1) pour la transcription vocale."@fr ;
+  rdfs:domain bv:SearchQuery ;
+  rdfs:range  xsd:decimal ;
+  rdfs:isDefinedBy bv: .
