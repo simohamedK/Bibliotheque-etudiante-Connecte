@@ -79,15 +79,18 @@
 
             // Quand la voix est reconnue
             recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const confidence = event.results[0][0].confidence;
-                
-                statutVoix.textContent = `Vous avez dit : "${transcript}"`;
-                champRecherche.value = transcript; // Mettre le texte dans le champ
-                
-                rechercherLivres(transcript); // Lancer la recherche
-                journaliserRecherche(transcript, 'voix', confidence); // Journaliser
-            };
+              const rawTranscript = event.results[0][0].transcript; // ex: "Les Misérables."
+              const confidence = event.results[0][0].confidence;
+
+              // L'API ajoute un point final. On le supprime avant la recherche.
+              const transcript = rawTranscript.replace(/\.$/, ''); // ex: "Les Misérables"
+
+              statutVoix.textContent = `Vous avez dit : "${transcript}"`;
+              champRecherche.value = transcript; // Mettre le texte NETTOYÉ dans le champ
+
+              rechercherLivres(transcript); // Lancer la recherche avec le texte NETTOYÉ
+              journaliserRecherche(transcript, 'voix', confidence); // Journaliser avec le texte NETTOYÉ
+          };
             
             recognition.onerror = (event) => {
                 statutVoix.textContent = "Erreur de reconnaissance vocale: " + event.error;
