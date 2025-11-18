@@ -9,14 +9,15 @@
         body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f9f9f9; }
         h1, h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
         #controls, #upload-controls { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px;}
-        input[type="text"], input[type="file"] { width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; }
+        input[type="text"] { width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; }
+        input[type="file"] { margin-top: 10px; }
         button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: #007bff; color: white; }
         button:hover { background-color: #0056b3; }
         #btnParler { background-color: #28a745; }
         #btnParler:hover { background-color: #218838; }
-        #listeResultats { list-style-type: none; padding: 0; }
-        #listeResultats li { background-color: #fff; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 20px; }
-        #listeResultats strong { display: block; font-size: 1.2em; color: #0056b3; margin-bottom: 5px; }
+        #listeResultats, #listeMedias { list-style-type: none; padding: 0; }
+        #listeResultats li, #listeMedias li { background-color: #fff; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 20px; }
+        #listeResultats strong, #listeMedias strong { display: block; font-size: 1.2em; color: #0056b3; margin-bottom: 5px; }
         #listeResultats button { margin-left: 10px; background-color: #ffc107; color: black; }
         #listeResultats button:hover { background-color: #e0a800; }
         #statutVoix, #statutUpload { margin-top:10px; font-style: italic; color: #555; }
@@ -38,6 +39,11 @@
     <ul id="listeResultats"></ul>
 
     
+    <h2>Médias Récemment Ajoutés :</h2>
+    <ul id="listeMedias">
+        </ul>
+
+
     <div id="upload-controls">
         <h2>Ajouter un nouveau média (Audio/Vidéo)</h2>
         <p>Ajoutez un fichier (audio/vidéo) à Omeka S. Il sera créé comme un nouvel "Item" avec ce fichier attaché.</p>
@@ -69,6 +75,9 @@
         const ID_MODELE_LOG_RECHERCHE = 5;    // ID Modèle "Log Recherche"
         const ID_CLASSE_LIVRE = 1045;         // ID Classe "schema:Book" (pour le filtre)
         
+        // REMPLACEZ 0 PAR L'ID DE schema:MediaObject (voir étape 2 du message précédent)
+        const ID_CLASSE_MEDIA = 0; // <-- !! TROUVEZ CET ID DANS VOTRE API !! (ex: 1046)
+        
         const ID_PROP_TERME = 185;      // ID pour "bvi:termeRecherche"
         const ID_PROP_SOURCE = 186;     // ID pour "bvi:sourceRecherche"
         const ID_PROP_CONFIANCE = 187;  // ID pour "bvi:confianceScore"
@@ -81,9 +90,16 @@
         const champRecherche = document.getElementById('champRecherche');
         const listeResultats = d3.select('#listeResultats');
         const statutVoix = document.getElementById('statutVoix');
+        
+        // --- 3. ÉLÉMENTS DE LA PAGE (Upload) ---
+        const btnUploadMedia = document.getElementById('btnUploadMedia');
+        const mediaTitre = document.getElementById('mediaTitre');
+        const mediaFichier = document.getElementById('mediaFichier');
+        const statutUpload = document.getElementById('statutUpload');
+        const listeMedias = d3.select('#listeMedias');
 
 
-        // --- 3. RECHERCHE VOCALE (Web Speech API) ---
+        // --- 4. RECHERCHE VOCALE (Web Speech API) ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
@@ -123,7 +139,7 @@
         }
 
 
-        // --- 4. RECHERCHE TEXTE (Bouton) ---
+        // --- 5. RECHERCHE TEXTE (Bouton) ---
         btnRechercher.onclick = () => {
             const terme = champRecherche.value;
             if (terme) {
@@ -134,7 +150,7 @@
         };
 
 
-        // --- 5. FONCTION DE RECHERCHE OMEKA S (LIRE les données) ---
+        // --- 6. FONCTION DE RECHERCHE OMEKA S (LIRE les données) ---
         function rechercherLivres(terme) {
             // CORRECTION : Ajout du filtre resource_class_id pour n'avoir que les livres
             const url = `${OMEKA_API_URL}items?resource_class_id=${ID_CLASSE_LIVRE}&search=${encodeURIComponent(terme)}`;
@@ -167,7 +183,7 @@
         }
 
 
-        // --- 6. FONCTION DE NARRATION (Text-to-Speech) ---
+        // --- 7. FONCTION DE NARRATION (Text-to-Speech) ---
         function parlerTexte(texte) {
             window.speechSynthesis.cancel(); 
             const narration = new SpeechSynthesisUtterance(texte);
@@ -177,7 +193,7 @@
         }
         
 
-        // --- 7. FONCTION DE JOURNALISATION OMEKA S (ÉCRIRE des logs) ---
+        // --- 8. FONCTION DE JOURNALISATION OMEKA S (ÉCRIRE des logs) ---
         async function journaliserRecherche(terme, source, confiance) {
             console.log(`Journalisation : ${terme} (source: ${source})`);
 
@@ -216,79 +232,159 @@
         }
         
         
-        // --- 8. NOUVELLE PARTIE (UPLOAD DE MÉDIA SÉPARÉ) ---
-
-        // Récupérer les nouveaux éléments
-        const btnUploadMedia = document.getElementById('btnUploadMedia');
-        const mediaTitre = document.getElementById('mediaTitre');
-        const mediaFichier = document.getElementById('mediaFichier');
-        const statutUpload = document.getElementById('statutUpload');
+        // --- 9. NOUVELLE PARTIE (FONCTIONS D'UPLOAD MÉDIA) ---
 
         // Mettre un écouteur sur le nouveau bouton
         btnUploadMedia.onclick = () => {
             const titre = mediaTitre.value;
             const fichier = mediaFichier.files[0];
 
+            if (ID_CLASSE_MEDIA === 0) {
+                statutUpload.textContent = "Erreur : Veuillez d'abord configurer l'ID_CLASSE_MEDIA dans le script.";
+                return;
+            }
             if (!titre || !fichier) {
                 statutUpload.textContent = "Erreur : Le titre et le fichier sont obligatoires.";
                 return;
             }
             ajouterNouveauMedia(titre, fichier);
         };
+        
+        /**
+         * Affiche la liste des 5 médias les plus récents
+         */
+        async function afficherMediasRecents() {
+            if (ID_CLASSE_MEDIA === 0) {
+                listeMedias.html('<li>Veuillez configurer l\'ID_CLASSE_MEDIA dans le script.</li>');
+                return;
+            }
+            
+            statutUpload.textContent = "Chargement des médias...";
+            
+            // On cherche les 5 items de la classe Média, triés par date de création (du + récent au + ancien)
+            const url = `${OMEKA_API_URL}items?resource_class_id=${ID_CLASSE_MEDIA}&sort_by=created&sort_order=desc&limit=5`;
+
+            try {
+                const data = await d3.json(url);
+                listeMedias.html(''); // Vider la liste
+
+                if (!data || data.length === 0) {
+                    listeMedias.append('li').text("Aucun média n'a encore été ajouté.");
+                    return;
+                }
+
+                // Afficher chaque média
+                data.forEach(item => {
+                    const titre = item['o:title'] || "[Média sans titre]";
+                    const mediaCount = item['o:media'] ? item['o:media'].length : 0;
+                    
+                    const li = listeMedias.append('li')
+                        .html(`<strong>${titre}</strong><br> (ID: ${item['o:id']}) - ${mediaCount} fichier(s) attaché(s)`);
+                    
+                    // Ajouter un lien vers l'admin pour le voir
+                    li.append('a')
+                        .attr('href', item['@id'].replace('/api/items/', '/admin/item/'))
+                        .attr('target', '_blank')
+                        .text(' (Voir dans Omeka)')
+                        .style('margin-left', '10px');
+                });
+                statutUpload.textContent = "Liste des médias à jour.";
+
+            } catch (err) {
+                console.error("Erreur (afficherMediasRecents):", err);
+                listeMedias.html('<li>Erreur lors du chargement des médias.</li>');
+            }
+        }
 
         /**
-         * Crée un NOUVEL ITEM et y attache un FICHIER MEDIA en une seule fois.
+         * Uploade un média (Étape A) puis crée un item (Étape B)
          */
         async function ajouterNouveauMedia(titre, fichier) {
-            statutUpload.textContent = `Upload de "${fichier.name}" en cours...`;
+            statutUpload.textContent = `Étape 1/2 : Upload de "${fichier.name}" en cours...`;
 
+            // --- ÉTAPE A: UPLOAD DU FICHIER (POST /api/media) ---
+            
             const authParams = `?key_identity=${API_KEY_IDENTITY}&key_credential=${API_KEY_CREDENTIAL}`;
-            const url = `${OMEKA_API_URL}items${authParams}`;
+            const mediaUrl = `${OMEKA_API_URL}media${authParams}`;
+            const itemsUrl = `${OMEKA_API_URL}items${authParams}`;
 
-            // Pour un upload, nous devons utiliser "FormData" (pas JSON)
             const formData = new FormData();
+            formData.append('file', fichier); // Juste le fichier
 
-            // 1. Mettre les métadonnées (le titre) dans le "FormData"
-            const jsonData = {
-                "dcterms:title": [{
-                    "type": "literal",
-                    "@value": titre
-                }]
-                // On pourrait assigner une classe "Média" si on voulait
-                // "o:resource_class": { "o:id": VOTRE_ID_CLASSE_MEDIA } 
-            };
-            formData.append('data', JSON.stringify(jsonData));
+            let mediaId = null;
 
-            // 2. Mettre le fichier dans le "FormData"
-            // Le nom "file[0]" est ce que l'API Omeka S attend
-            formData.append('file[0]', fichier);
-
-            // 3. Envoyer la requête
             try {
-                const response = await fetch(url, {
+                // 1. Envoyer le fichier
+                const responseMedia = await fetch(mediaUrl, {
                     method: 'POST',
                     body: formData
-                    // Pas de header 'Content-Type', le navigateur le gère
                 });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    console.error("Erreur d'upload:", error);
-                    statutUpload.textContent = "Erreur lors de l'upload. (Voir la console)";
+                if (!responseMedia.ok) {
+                    const error = await responseMedia.json();
+                    console.error("Erreur (Étape A: Upload Média):", error);
+                    statutUpload.textContent = "Erreur lors de l'upload du fichier.";
+                    return; // Arrêter s'il y a une erreur
+                }
+                
+                const media = await responseMedia.json();
+                mediaId = media['o:id']; // Récupérer l'ID du média uploadé
+                console.log("Étape 1/2 Réussie. Média ID:", mediaId);
+                statutUpload.textContent = "Étape 2/2 : Création de l'item...";
+
+            } catch (err) {
+                console.error("Erreur réseau (Étape A):", err);
+                statutUpload.textContent = "Erreur réseau lors de l'upload.";
+                return;
+            }
+
+            // --- ÉTAPE B: CRÉATION DE L'ITEM (POST /api/items) ---
+            
+            // 2. Préparer les données JSON pour le nouvel item
+            const jsonData = {
+                "dcterms:title": [{ "type": "literal", "@value": titre }],
+                // Attacher le média que nous venons d'uploader
+                "o:media": [
+                    { "o:id": mediaId } 
+                ],
+                // Attacher la classe "Média"
+                "o:resource_class": { "o:id": ID_CLASSE_MEDIA }
+            };
+
+            // 3. Envoyer la requête de création d'item
+            try {
+                const responseItem = await fetch(itemsUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jsonData)
+                });
+
+                if (!responseItem.ok) {
+                    const error = await responseItem.json();
+                    console.error("Erreur (Étape B: Création Item):", error);
+                    statutUpload.textContent = "Erreur lors de la création de l'item.";
                 } else {
-                    const newItem = await response.json();
-                    console.log("Média ajouté avec succès ! Nouvel item créé:", newItem['o:id']);
+                    const newItem = await responseItem.json();
+                    console.log("Étape 2/2 Réussie. Item créé:", newItem['o:id']);
                     statutUpload.textContent = `Succès ! Le fichier "${fichier.name}" a été ajouté (Item ID: ${newItem['o:id']}).`;
                     
                     // Vider les champs
                     mediaTitre.value = "";
                     mediaFichier.value = null;
+                    
+                    // Raffraîchir la liste des médias
+                    afficherMediasRecents(); 
                 }
             } catch (err) {
-                console.error("Erreur réseau (upload):", err);
-                statutUpload.textContent = "Erreur réseau lors de l'upload.";
+                console.error("Erreur réseau (Étape B):", err);
+                statutUpload.textContent = "Erreur réseau lors de la création de l'item.";
             }
         }
+        
+        
+        // --- 10. DÉMARRAGE ---
+        // Charger les médias existants au démarrage de la page
+        afficherMediasRecents();
 
     </script>
 </body>
