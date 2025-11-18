@@ -309,7 +309,7 @@
             const itemsUrl = `${OMEKA_API_URL}items${authParams}`;
 
             const formData = new FormData();
-            formData.append('file', fichier); // Juste le fichier
+            formData.append('file[0]', fichier); // Juste le fichier
 
             let mediaId = null;
 
